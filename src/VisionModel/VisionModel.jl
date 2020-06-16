@@ -3,8 +3,6 @@ module VisionModel
 using Flux, Images, REPL
 
 # Models
-export AlexNet
-
-include("AlexNet.jl")
+include("alexnet.jl")
 
 end module

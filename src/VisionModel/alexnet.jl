@@ -1,5 +1,4 @@
-
-function AlexNet():
+function alexnet():
   layers = Chain(Conv((11, 11), 3=>64, stride=(4, 4), relu, pad=(2, 2)),
             MaxPool((3, 3), stride=(2, 2)),
             Conv((5, 5), 64=>192, relu, pad=(2, 2)),
@@ -19,7 +18,3 @@ function AlexNet():
 Flux.testmode!(layers)
 return layers
 end
-end
-functor(AlexNet)
-Base.show(io::IO, ::AlexNet) = print(io, "AlexNet()")
-
