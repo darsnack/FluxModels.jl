@@ -1,7 +1,8 @@
 module FluxModels
 
-export VisionModel
-
+using Reexport
 include("./VisionModel/VisionModel.jl")
+@reexport using .VisionModel
+
 
 end
