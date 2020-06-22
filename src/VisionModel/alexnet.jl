@@ -15,6 +15,6 @@ function alexnet():
             Dense(4096, 4096, relu),
             Dense(4096, 1000)
             )
-Flux.testmode!(layers)
-return layers
+  Flux.testmode!(layers)
+  return layers
 end
