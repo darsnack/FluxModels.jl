@@ -1,5 +1,5 @@
 module FluxModels
 
-include("./VisionModel.jl")
+include("./VisionModel/VisionModel.jl")
 
 end
