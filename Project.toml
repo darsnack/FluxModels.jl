@@ -3,6 +3,9 @@ uuid = "5a58f058-f5b9-4204-9644-e62f3e70829d"
 authors = ["Kyle Daruwalla"]
 version = "0.1.0"
 
+[deps]
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+
 [compat]
 julia = "1"
 
