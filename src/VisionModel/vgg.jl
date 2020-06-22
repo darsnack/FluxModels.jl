@@ -1,3 +1,5 @@
+include("convnb.jl")
+
 export vgg11, vgg11bn, vgg13, vgg13bn, vgg16, vgg16bn, vgg19, vgg19bn
 
 const configs = Dict(:A => [(64,1) (128,1) (256,2) (512,2) (512,2)],
@@ -8,7 +10,7 @@ const configs = Dict(:A => [(64,1) (128,1) (256,2) (512,2) (512,2)],
 # Build a VGG block
 #  ifilters: number of input filters
 #  ofilters: number of output filters
-#  batchnorm: add batchnorm (see below for the problem of biases in Conv)
+#  batchnorm: add batchnorm
 function vgg_block(ifilters, ofilters, depth, batchnorm)
   k = (3,3)
   p = (1,1)
@@ -18,7 +20,7 @@ function vgg_block(ifilters, ofilters, depth, batchnorm)
     if batchnorm
       # Conv with BatchNorm must have no biases, not possible with Flux v0.10.4, however it seems
       # available in Flux#master
-      push!(layers, Conv(k, ifilters=>ofilters, pad=p, init=i))
+      push!(layers, ConvNB(k, ifilters=>ofilters, pad=p, init=i))
       push!(layers, BatchNorm(ofilters, relu))
     else
       push!(layers, Conv(k, ifilters=>ofilters, relu, pad=p, init=i))
@@ -28,10 +30,10 @@ function vgg_block(ifilters, ofilters, depth, batchnorm)
   return layers
 end
 
-# Build convolutionnal layers
+# Build convolutional layers
 #  config: :A (vgg11) :B (vgg13) :D (vgg16) :E (vgg19)
 #  inchannels: number of channels in input image (3 for RGB)
-function convolutionnal_layers(config, batchnorm, inchannels)
+function convolutional_layers(config, batchnorm, inchannels)
   layers = []
   ifilters = inchannels
   for c in configs[config]
@@ -59,11 +61,10 @@ function classifier_layers(imsize, nclasses, fcsize, dropout)
 end
 
 function vgg(imsize; config, batchnorm=false, inchannels=3, nclasses, fcsize=4096, dropout=0.5)
-  conv = convolutionnal_layers(config, batchnorm, inchannels)
+  conv = convolutional_layers(config, batchnorm, inchannels)
   class = classifier_layers(imsize, nclasses, fcsize, dropout)
   return Chain(conv..., class...)
 end
-
 
 vgg11(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
   vgg(imsize, config=:A, inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
