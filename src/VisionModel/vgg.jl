@@ -10,7 +10,7 @@ const configs = Dict(:A => [(64,1) (128,1) (256,2) (512,2) (512,2)],
 # Build a VGG block
 #  ifilters: number of input filters
 #  ofilters: number of output filters
-#  batchnorm: add batchnorm
+#  batchnorm: add batchnorm (see below for the problem of biases in Conv)
 function vgg_block(ifilters, ofilters, depth, batchnorm)
   k = (3,3)
   p = (1,1)
@@ -30,24 +30,25 @@ function vgg_block(ifilters, ofilters, depth, batchnorm)
   return layers
 end
 
-# Build convolutional layers
+# Build convolutionnal layers
 #  config: :A (vgg11) :B (vgg13) :D (vgg16) :E (vgg19)
 #  inchannels: number of channels in input image (3 for RGB)
-function convolutional_layers(config, batchnorm, inchannels)
+function convolutionnal_layers(config, batchnorm, inchannels)
   layers = []
   ifilters = inchannels
   for c in configs[config]
-    layers = cat(layers, vgg_block(ifilters, c..., batchnorm), MaxPool((2,2)), dims=1)
+    push!(layers, vgg_block(ifilters, c..., batchnorm)...)
+    push!(layers, MaxPool((2,2)))
     ifilters, _ = c
   end
-  return layers
+  return Chain(layers...)
 end
 
 # Build classification layers
 #  imsize: image size
 #  nclasses: number of classes
 #  fcsize: size of fully connected layers (usefull for smaller nclasses than ImageNet)
-#  dropout: dropout importance
+#  dropout: dropout obviously
 function classifier_layers(imsize, nclasses, fcsize, dropout)
   layers = []
   push!(layers, flatten)
@@ -57,13 +58,13 @@ function classifier_layers(imsize, nclasses, fcsize, dropout)
   push!(layers, Dropout(dropout))
   push!(layers, Dense(fcsize, nclasses))
   push!(layers, softmax)
-  return layers
+  return Chain(layers...)
 end
 
 function vgg(imsize; config, batchnorm=false, inchannels=3, nclasses, fcsize=4096, dropout=0.5)
-  conv = convolutional_layers(config, batchnorm, inchannels)
+  conv = convolutionnal_layers(config, batchnorm, inchannels)
   class = classifier_layers(imsize, nclasses, fcsize, dropout)
-  return Chain(conv..., class...)
+  return Chain(conv, class)
 end
 
 vgg11(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
