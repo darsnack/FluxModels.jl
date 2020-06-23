@@ -14,32 +14,32 @@ function resnet()
     error("Dilation > 1 not supported in BasicBlock");
   end
   planes = 64;    
-  layers = SkipConnection(layers, Chain(
+  layers = SkipConnection(layers, Sequential(
     Conv((3, 3), planes ÷ 2 => planes, stride = (1,1), pad = (1,1), dilation = 1),
     BatchNorm(planes, λ = relu),
     Conv((3, 3), planes => planes, stride = (1,1), pad = (1,1), dilation = 1),
     BatchNorm(planes),
-    Sequential(Conv((1, 1), planes ÷ 2 => planes * expansion, stride=(1, 1)),
+    Conv((1, 1), planes ÷ 2 => planes * expansion, stride=(1, 1)),
            BatchNorm(planes * expansion)
     ), x -> relu.(x)
-  ))
+  )
   expansion = 4;
   base_width = 64;
   groups = 1;
   width = int(planes * (base_width / 64.)) * groups;
   planes = 64;
   for i in 2:4
-    layers = SkipConnection(layers, Chain(
+    layers = SkipConnection(layers, Sequential(
       Conv((1, 1), planes*2=>width, stride=(2,2), dilation=0),
       BatchNorm(width, λ=relu),
       Conv((3, 3), width=>width, stride=(2, 2), pad=(1, 1), groups=1, dilation=0),
       BatchNorm(planes, λ=relu),
       Conv((1, 1), width=>planes * expansion, stride=(2,2), dilation=0),
       BatchNorm(planes * expansion),
-      Sequential(Conv((1, 1), width=>planes * expansion, stride=(2, 2), dilation=0),
+      Conv((1, 1), width=>planes * expansion, stride=(2, 2), dilation=0),
             BatchNorm(planes * expansion)
       ), x -> relu.(x)
-      ))
+      )
     
   layers = SkipConnection(layers, Chain(AdaptiveMeanPool(1, 1)),
     x -> flatten(x, 1),
