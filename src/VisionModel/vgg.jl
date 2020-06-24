@@ -1,4 +1,4 @@
-include("convnb.jl")
+using Flux: convfilter, Zeros
 
 export vgg11, vgg11bn, vgg13, vgg13bn, vgg16, vgg16bn, vgg19, vgg19bn
 
@@ -10,16 +10,16 @@ const configs = Dict(:A => [(64,1) (128,1) (256,2) (512,2) (512,2)],
 # Build a VGG block
 #  ifilters: number of input filters
 #  ofilters: number of output filters
-#  batchnorm: add batchnorm (see below for the problem of biases in Conv)
+#  batchnorm: add batchnorm
 function vgg_block(ifilters, ofilters, depth, batchnorm)
   k = (3,3)
   p = (1,1)
   layers = []
   for l in 1:depth
     if batchnorm
-      # Conv with BatchNorm must have no biases, not possible with Flux v0.10.4, however it seems
-      # available in Flux#master
-      push!(layers, ConvNB(k, ifilters=>ofilters, pad=p))
+      w = convfilter(k, ifilters=>ofilters)
+      b = Zeros()
+      push!(layers, Conv(weight=w, bias=b, pad=p))
       push!(layers, BatchNorm(ofilters, relu))
     else
       push!(layers, Conv(k, ifilters=>ofilters, relu, pad=p))
