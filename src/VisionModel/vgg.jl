@@ -33,7 +33,7 @@ end
 # Build convolutionnal layers
 #  config: :A (vgg11) :B (vgg13) :D (vgg16) :E (vgg19)
 #  inchannels: number of channels in input image (3 for RGB)
-function convolutionnal_layers(config, batchnorm, inchannels)
+function convolutional_layers(config, batchnorm, inchannels)
   layers = []
   ifilters = inchannels
   for c in configs[config]
@@ -62,7 +62,7 @@ function classifier_layers(imsize, nclasses, fcsize, dropout)
 end
 
 function vgg(imsize; config, batchnorm=false, inchannels=3, nclasses, fcsize=4096, dropout=0.5)
-  conv = convolutionnal_layers(config, batchnorm, inchannels)
+  conv = convolutional_layers(config, batchnorm, inchannels)
   class = classifier_layers(imsize, nclasses, fcsize, dropout)
   return Chain(conv, class)
 end

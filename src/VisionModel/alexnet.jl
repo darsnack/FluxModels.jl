@@ -8,12 +8,12 @@ function alexnet()
                  Conv((3, 3), 256=>256, relu, pad=(1, 1)),
                  MaxPool((3, 3), stride=(2, 2)),
                  AdaptiveAvgPool((6,6)),
-                 x -> flatten(x, 1), #??? 
+                 x -> flatten(x, 1),
                  Dropout(),
                  Dense(256 * 6 * 6, 4096, relu),
                  Dropout(),
                  Dense(4096, 4096, relu),
                  Dense(4096, 1000))
-  Flux.testmode!(layers) #??? should be use in traing loop
+  Flux.testmode!(layers)
   return layers
 end
