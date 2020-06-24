@@ -1,8 +1,9 @@
 module VisionModel
 
-using Flux, Images, REPL
+using Flux, Images
 
 # Models
 include("alexnet.jl")
+include("vgg.jl")
 
-end module
+end

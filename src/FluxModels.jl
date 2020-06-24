@@ -1,5 +1,8 @@
 module FluxModels
 
-# Write your package code here.
+using Reexport
+include("./VisionModel/VisionModel.jl")
+@reexport using .VisionModel
+
 
 end
