@@ -14,16 +14,15 @@ const configs = Dict(:A => [(64,1) (128,1) (256,2) (512,2) (512,2)],
 function vgg_block(ifilters, ofilters, depth, batchnorm)
   k = (3,3)
   p = (1,1)
-  i = Flux.glorot_uniform
   layers = []
   for l in 1:depth
     if batchnorm
       # Conv with BatchNorm must have no biases, not possible with Flux v0.10.4, however it seems
       # available in Flux#master
-      push!(layers, ConvNB(k, ifilters=>ofilters, pad=p, init=i))
+      push!(layers, ConvNB(k, ifilters=>ofilters, pad=p))
       push!(layers, BatchNorm(ofilters, relu))
     else
-      push!(layers, Conv(k, ifilters=>ofilters, relu, pad=p, init=i))
+      push!(layers, Conv(k, ifilters=>ofilters, relu, pad=p))
     end
     ifilters = ofilters
   end
