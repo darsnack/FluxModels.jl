@@ -40,7 +40,7 @@ function convolutional_layers(config, batchnorm, inchannels)
     push!(layers, MaxPool((2,2)))
     ifilters, _ = c
   end
-  return Chain(layers...)
+  return layers
 end
 
 # Build classification layers
@@ -57,13 +57,13 @@ function classifier_layers(imsize, nclasses, fcsize, dropout)
   push!(layers, Dropout(dropout))
   push!(layers, Dense(fcsize, nclasses))
   push!(layers, softmax)
-  return Chain(layers...)
+  return layers
 end
 
 function vgg(imsize; config, batchnorm=false, inchannels=3, nclasses, fcsize=4096, dropout=0.5)
   conv = convolutional_layers(config, batchnorm, inchannels)
   class = classifier_layers(imsize, nclasses, fcsize, dropout)
-  return Chain(conv, class)
+  return Chain(conv..., class...)
 end
 
 vgg11(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
