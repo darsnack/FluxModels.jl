@@ -1,51 +1,72 @@
 using Flux
-# I haven't checked ``downsample`` parameter as it is always performed after every block.
-function resnet()
-  layers = Chain(
-      Conv((7, 7), 3=>64, stride=(2, 2), pad=(3, 3)),
-      BatchNorm(64, λ=relu),
-      MaxPool((3, 3), stride=(2, 2), pad=(1, 1))
-      )
-  expansion = 1;
-  if groups != 1 || base_width != 64
-    error('Basic block only supports groups=1 and base_width=64');
-  end
+
+function basicblock()
+  dilation = 1;
   if dilation > 1
-    error("Dilation > 1 not supported in BasicBlock");
+    error("Dilation > 1 not supported in Basic Block");
   end
-  planes = 64;    
-  layers = SkipConnection(layers, Sequential(
-    Conv((3, 3), planes ÷ 2 => planes, stride = (1,1), pad = (1,1), dilation = 1),
-    BatchNorm(planes, λ = relu),
-    Conv((3, 3), planes => planes, stride = (1,1), pad = (1,1), dilation = 1),
-    BatchNorm(planes),
-    Conv((1, 1), planes ÷ 2 => planes * expansion, stride=(1, 1)),
-           BatchNorm(planes * expansion)
-    ), x -> relu.(x)
-  )
-  expansion = 4;
+  return dilation
+end
+
+function bottleneck(planes::Int, stride::Int)
+  stride = 2
   base_width = 64;
   groups = 1;
-  width = int(planes * (base_width / 64.)) * groups;
+  width = Int(planes * (base_width / 64.)) * groups;
+  return width, stride
+end 
+
+function identity(inplanes::Int, planes::Int)
+  inplanes = inplanes;
+  planes = planes;
+  return inplanes, planes
+end
+
+function resnet()
   planes = 64;
-  for i in 2:4
-    layers = SkipConnection(layers, Sequential(
-      Conv((1, 1), planes*2=>width, stride=(2,2), dilation=0),
-      BatchNorm(width, λ=relu),
-      Conv((3, 3), width=>width, stride=(2, 2), pad=(1, 1), groups=1, dilation=0),
+  inplanes = 64;
+  expansion = 1;
+  layers = Chain(
+      Conv((7, 7), 3=>planes, stride=(2, 2), pad=(3, 3)),
       BatchNorm(planes, λ=relu),
-      Conv((1, 1), width=>planes * expansion, stride=(2,2), dilation=0),
-      BatchNorm(planes * expansion),
-      Conv((1, 1), width=>planes * expansion, stride=(2, 2), dilation=0),
-            BatchNorm(planes * expansion)
-      ), x -> relu.(x)
-      )
-    
-  layers = SkipConnection(layers, Chain(AdaptiveMeanPool(1, 1)),
-    x -> flatten(x, 1),
-    Dense(512 * expansion, 1000));
-Flux.testmode!(ls)
-return layers;
+      MaxPool((3, 3), stride=(2, 2), pad=(1, 1))
+      );
+    basic =  Chain(
+      Conv((3, 3), inplanes=>planes, stride=(1,1), pad=(1,1), dilation=dilation),
+      BatchNorm(planes, λ = relu),
+      Conv((3, 3), planes=>planes, stride=(1,1), pad=(1,1), dilation=dilation),
+      BatchNorm(planes)
+    );
+  push!(layers, SkipConnection(basic, basicblock());
+  stride, dilation = basicblock();
+
+  for i in 2:4
+    push!(layers, SkipConnection(basic, basicblock());
+    planes = planes*2;
+    inplanes = planes * expansion;
+    expansion = 4;
+    downsample =  Chain(Conv((1, 1), inplanes=>planes * expansion, stride=stride),
+                  BatchNorm(planes * expansion, λ=relu));
+      residual =  Chain(
+          Conv((1, 1), inplanes=>width, stride=(2,2)),
+          BatchNorm(width, λ=relu),
+          Conv((3, 3), width=>width, stride=(2,2), pad=(1,1), dilation=dilation),
+          BatchNorm(width, λ=relu),
+          Conv((1, 1), width=>planes * expansion, stride=(2,2)),
+          BatchNorm(planes * expansion, λ=relu)
+          );
+    for j in 1:i:
+      push!(layers, SkipConnection(residual, bottleneck(planes, dilation)));
+      push!(layers, SkipConnection(downsample, identity(inplanes, planes)));
+      width, dilation = bottleneck();
+    end
+  
+  push!(layers, AdaptiveMeanPool(1, 1))
+  push!(layers, x -> flatten(x, 1))
+  push!(layers, Dense(512 * expansion, 1000));
+
+  Flux.testmode!(layers)
+  return layers;
 end
 #=
 resnet_configs =
