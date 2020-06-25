@@ -5,7 +5,13 @@ function basicblock()
   if dilation > 1
     error("Dilation > 1 not supported in Basic Block");
   end
-  return dilation
+  basic =  Chain(
+      Conv((3, 3), inplanes=>planes, stride=stride, pad=(1,1), dilation=dilation),
+      BatchNorm(planes, λ = relu),
+      Conv((3, 3), planes=>planes, stride=stride, pad=(1,1), dilation=dilation),
+      BatchNorm(planes)
+    );
+  return basic
 end
 
 function bottleneck(planes::Int, stride::Int)
@@ -13,13 +19,23 @@ function bottleneck(planes::Int, stride::Int)
   base_width = 64;
   groups = 1;
   width = Int(planes * (base_width / 64.)) * groups;
-  return width, stride
+  residual =  Chain(
+          Conv((1, 1), inplanes=>width, stride=(2,2)),
+          BatchNorm(width, λ=relu),
+          Conv((3, 3), width=>width, stride=(2,2), pad=(1,1), dilation=dilation),
+          BatchNorm(width, λ=relu),
+          Conv((1, 1), width=>planes * expansion, stride=(2,2)),
+          BatchNorm(planes * expansion, λ=relu)
+          );
+  return residual
 end 
 
-function identity(inplanes::Int, planes::Int)
+function identity(inplanes::Int, planes::Int, stride::Int, expansion::Int)
   inplanes = inplanes;
   planes = planes;
-  return inplanes,planes
+  downsample =  Chain(Conv((1, 1), inplanes=>planes * expansion, stride=stride),
+  BatchNorm(planes * expansion, λ=relu));
+  return identity
 end
 
 function resnet()
@@ -32,38 +48,24 @@ function resnet()
       BatchNorm(planes, λ=relu),
       MaxPool((3, 3), stride=(2, 2), pad=(1, 1))
       );
-    basic =  Chain(
-      Conv((3, 3), inplanes=>planes, stride=stride, pad=(1,1), dilation=dilation),
-      BatchNorm(planes, λ = relu),
-      Conv((3, 3), planes=>planes, stride=stride, pad=(1,1), dilation=dilation),
-      BatchNorm(planes)
-    );
-  push!(layers, SkipConnection(basic, basicblock());
+    
+  push!(layers, SkipConnection(layers, basicblock(inplanes, planes, stride));
   stride, dilation = basicblock();
 
   for i in 2:4
     stride = 2;
-    downsample =  Chain(Conv((1, 1), inplanes=>planes * expansion, stride=stride),
-                  BatchNorm(planes * expansion, λ=relu));
-    push!(layers, SkipConnection(basic, basicblock());
-    push!(layers, SkipConnection(downsample, identity(inplanes, planes)));
+    push!(layers, SkipConnection(layers, basicblock(inplanes, planes, stride));
+    push!(layers, SkipConnection(layers, identity(inplanes, planes, stride, 1)));
     planes = planes*2;
     inplanes = planes * expansion;
     expansion = 4;
-      residual =  Chain(
-          Conv((1, 1), inplanes=>width, stride=(2,2)),
-          BatchNorm(width, λ=relu),
-          Conv((3, 3), width=>width, stride=(2,2), pad=(1,1), dilation=dilation),
-          BatchNorm(width, λ=relu),
-          Conv((1, 1), width=>planes * expansion, stride=(2,2)),
-          BatchNorm(planes * expansion, λ=relu)
-          );
+      
     for j in 1:i
-      push!(layers, SkipConnection(residual, bottleneck(planes, dilation)));
-      push!(layers, SkipConnection(downsample, identity(inplanes, planes)));
+      push!(layers, SkipConnection(layers, bottleneck(inplanes, planes, dilation)));
+      push!(layers, SkipConnection(layers, identity(inplanes, planes, stride, 4)));
       width, dilation = bottleneck();
     end
-  end
+  
   push!(layers, AdaptiveMeanPool(1, 1))
   push!(layers, x -> flatten(x, 1))
   push!(layers, Dense(512 * expansion, 1000));
