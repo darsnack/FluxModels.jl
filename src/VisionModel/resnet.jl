@@ -19,34 +19,37 @@ end
 function identity(inplanes::Int, planes::Int)
   inplanes = inplanes;
   planes = planes;
-  return inplanes, planes
+  return inplanes,planes
 end
 
 function resnet()
   planes = 64;
   inplanes = 64;
   expansion = 1;
+  stride = 1;
   layers = Chain(
       Conv((7, 7), 3=>planes, stride=(2, 2), pad=(3, 3)),
       BatchNorm(planes, λ=relu),
       MaxPool((3, 3), stride=(2, 2), pad=(1, 1))
       );
     basic =  Chain(
-      Conv((3, 3), inplanes=>planes, stride=(1,1), pad=(1,1), dilation=dilation),
+      Conv((3, 3), inplanes=>planes, stride=stride, pad=(1,1), dilation=dilation),
       BatchNorm(planes, λ = relu),
-      Conv((3, 3), planes=>planes, stride=(1,1), pad=(1,1), dilation=dilation),
+      Conv((3, 3), planes=>planes, stride=stride, pad=(1,1), dilation=dilation),
       BatchNorm(planes)
     );
   push!(layers, SkipConnection(basic, basicblock());
   stride, dilation = basicblock();
 
   for i in 2:4
+    stride = 2;
+    downsample =  Chain(Conv((1, 1), inplanes=>planes * expansion, stride=stride),
+                  BatchNorm(planes * expansion, λ=relu));
     push!(layers, SkipConnection(basic, basicblock());
+    push!(layers, SkipConnection(downsample, identity(inplanes, planes)));
     planes = planes*2;
     inplanes = planes * expansion;
     expansion = 4;
-    downsample =  Chain(Conv((1, 1), inplanes=>planes * expansion, stride=stride),
-                  BatchNorm(planes * expansion, λ=relu));
       residual =  Chain(
           Conv((1, 1), inplanes=>width, stride=(2,2)),
           BatchNorm(width, λ=relu),
@@ -55,12 +58,12 @@ function resnet()
           Conv((1, 1), width=>planes * expansion, stride=(2,2)),
           BatchNorm(planes * expansion, λ=relu)
           );
-    for j in 1:i:
+    for j in 1:i
       push!(layers, SkipConnection(residual, bottleneck(planes, dilation)));
       push!(layers, SkipConnection(downsample, identity(inplanes, planes)));
       width, dilation = bottleneck();
     end
-  
+  end
   push!(layers, AdaptiveMeanPool(1, 1))
   push!(layers, x -> flatten(x, 1))
   push!(layers, Dense(512 * expansion, 1000));
