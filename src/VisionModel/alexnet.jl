@@ -1,4 +1,4 @@
-function alexnet():
+function alexnet()
   layers = Chain(Conv((11, 11), 3=>64, stride=(4, 4), relu, pad=(2, 2)),
             MaxPool((3, 3), stride=(2, 2)),
             Conv((5, 5), 64=>192, relu, pad=(2, 2)),
@@ -16,5 +16,5 @@ function alexnet():
             Dense(4096, 1000)
             )
 Flux.testmode!(layers)
-return layers
+return layers;
 end
