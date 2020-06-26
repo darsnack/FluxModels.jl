@@ -16,5 +16,5 @@ function alexnet():
             Dense(4096, 1000)
             )
 Flux.testmode!(layers)
-return layers
+return layers;
 end
