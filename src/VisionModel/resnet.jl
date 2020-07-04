@@ -28,28 +28,40 @@ projection(inplanes::Int, planes::Int, stride::Int) = Chain(Conv((1, 1), inplane
                                                             BatchNorm((outplanes), λ=relu))
 
 
-function resnet(channel_config::Dict{string, Int}, block_config::Dict{String, Int})
-  #=  begin
-    planes = 64
-    inplanes = 64
-    expansion = 1
-    stride = 1
-    end =#
+function resnet(channel_config::AbstractArray{Int,1}, block_config::AbstractArray{Int,1})
+   # begin
+   # planes = 64
+   # inplanes = 64
+   # expansion = 1
+   # stride = 1
+   # end
     layers = []
     push!(layers, Conv((7, 7), 3=>inplanes, stride=(2, 2), pad=(3, 3)))
     push!(layers, BatchNorm(inplanes, λ=relu))
     push!(layers, MaxPool((3, 3), stride=(2, 2), pad=(1, 1)))
     inplanes = 64
-    outplanes = 64
     for nrepeats in block_config
-    
-      push!(layers, SkipConnection(basicblock(inplanes, outplanes, downsample), 
-                          projection(inplanes, planes, stride)))
-      outplanes = outplanes * 2
-      for expansion in channel_config
-        push!(layers, SkipConnection(bottleneck(inplanes, outplanes, downsample),
+      if length(channel_config) == 2
+        for i in 1:nrepeats
+          for expansion in channel_config
+            outplanes = inplanes * expansion
+            push!(layers, SkipConnection(basicblock(inplanes, outplanes, true), +))
+          end
+        end
+        inplanes *= 2
+        push!(layers, SkipConnection(basicblock(inplanes, outplanes, true),
                                      projection(inplanes, outplanes, stride)))
-        inplanes = inplanes * expansion
+      end
+      if length(channel_config) == 3
+        for i in 1:nrepeats
+          for expansion in channel_config
+            outplanes = inplanes * expansion
+            push!(layers, SkipConnection(bottleneck(inplanes, outplanes, true), +))
+          end
+        end 
+        inplanes *= 2
+        push!(layers, SkipConnection(bottleneck(inplanes, outplanes, true),
+                                     projection(inplanes, outplanes, stride)))
       end
     end
     push!(layers, AdaptiveMeanPool(1, 1))
