@@ -30,37 +30,31 @@ projection(inplanes::Int, outplanes::Int, stride::Int) = Chain(Conv((1, 1), inpl
 identity(inplanes::Int, outplanes::Int, stride::Int) = +
 
 function resnet(channel_config::AbstractArray{Int,1}, block_config::AbstractArray{Int,1})
-   # begin
-   # planes = 64
-   # inplanes = 64
-   # expansion = 1
-   # stride = 1
-   # end
-    layers = []
-    push!(layers, Conv((7, 7), 3=>inplanes, stride=(2, 2), pad=(3, 3)))
-    push!(layers, BatchNorm(inplanes, λ=relu))
-    push!(layers, MaxPool((3, 3), stride=(2, 2), pad=(1, 1)))
-    inplanes = 64
-    for nrepeats in block_config
-      for i in 1:nrepeats
-        for expansion in channel_config
-          outplanes = inplanes * expansion
-          push!(layers, SkipConnection(block(inplanes, outplanes, i == 1),
-                                       shortcut(inplanes, outplanes, stride)))
+  layers = []
+  push!(layers, Conv((7, 7), 3=>inplanes, stride=(2, 2), pad=(3, 3)))
+  push!(layers, BatchNorm(inplanes, λ=relu))
+  push!(layers, MaxPool((3, 3), stride=(2, 2), pad=(1, 1)))
+  inplanes = 64
+  for nrepeats in block_config
+    for i in 1:nrepeats
+      for expansion in channel_config
+        outplanes = inplanes * expansion
+        push!(layers, SkipConnection(block(inplanes, outplanes, i == 1),
+                                     shortcut(inplanes, outplanes, stride)))
           
-        end
-      end 
-      inplanes *= 2
-    end
-    push!(layers, AdaptiveMeanPool(1, 1))
-    push!(layers, x -> flatten(x, 1))
-    push!(layers, Dense(512 * expansion, 1000))
+      end
+    end 
+    inplanes *= 2
+  end
+  push!(layers, AdaptiveMeanPool(1, 1))
+  push!(layers, x -> flatten(x, 1))
+  push!(layers, Dense(512 * expansion, 1000))
 
   Flux.testmode!(layers)
   return layers
 end
 
-resnet_config =
+const resnet_config =
 Dict("resnet18" => ([1, 1], [2, 2, 2, 2]),
      "resnet34" => ([1, 1], [3, 4, 6, 3]),
      "resnet50" => ([1, 1, 4], [3, 4, 6, 3]),
