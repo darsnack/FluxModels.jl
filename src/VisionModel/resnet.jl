@@ -24,9 +24,10 @@ bottleneck(inplanes::Int, outplanes::Int, downsample::Bool = false) = downsample
         Conv((1, 1), inplanes => outplanes, stride = 1),
         BatchNorm(outplanes, λ = relu))
 
-projection(inplanes::Int, planes::Int, stride::Int) = Chain(Conv((1, 1), inplanes => outplanes, stride=stride),
-                                                            BatchNorm((outplanes), λ=relu))
+projection(inplanes::Int, outplanes::Int, stride::Int) = Chain(Conv((1, 1), inplanes => outplanes, stride=stride),
+                                                               BatchNorm((outplanes), λ=relu))
 
+identity(inplanes::Int, outplanes::Int, stride::Int) = +
 
 function resnet(channel_config::AbstractArray{Int,1}, block_config::AbstractArray{Int,1})
    # begin
@@ -41,28 +42,15 @@ function resnet(channel_config::AbstractArray{Int,1}, block_config::AbstractArra
     push!(layers, MaxPool((3, 3), stride=(2, 2), pad=(1, 1)))
     inplanes = 64
     for nrepeats in block_config
-      if length(channel_config) == 2
-        for i in 1:nrepeats
-          for expansion in channel_config
-            outplanes = inplanes * expansion
-            push!(layers, SkipConnection(basicblock(inplanes, outplanes, true), +))
-          end
+      for i in 1:nrepeats
+        for expansion in channel_config
+          outplanes = inplanes * expansion
+          push!(layers, SkipConnection(block(inplanes, outplanes, i == 1),
+                                       shortcut(inplanes, outplanes, stride)))
+          
         end
-        inplanes *= 2
-        push!(layers, SkipConnection(basicblock(inplanes, outplanes, true),
-                                     projection(inplanes, outplanes, stride)))
-      end
-      if length(channel_config) == 3
-        for i in 1:nrepeats
-          for expansion in channel_config
-            outplanes = inplanes * expansion
-            push!(layers, SkipConnection(bottleneck(inplanes, outplanes, true), +))
-          end
-        end 
-        inplanes *= 2
-        push!(layers, SkipConnection(bottleneck(inplanes, outplanes, true),
-                                     projection(inplanes, outplanes, stride)))
-      end
+      end 
+      inplanes *= 2
     end
     push!(layers, AdaptiveMeanPool(1, 1))
     push!(layers, x -> flatten(x, 1))
