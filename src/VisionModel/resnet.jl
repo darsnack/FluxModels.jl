@@ -29,27 +29,27 @@ projection(inplanes::Int, outplanes::Int, stride::Int) = Chain(Conv((1, 1), inpl
 
 identity(inplanes::Int, outplanes::Int, stride::Int) = +
 
-function resnet(channel_config::AbstractArray{Int,1}, block_config::AbstractArray{Int,1})
+function resnet(block, shortcut, channel_config, block_config)
   layers = []
   push!(layers, Conv((7, 7), 3=>inplanes, stride=(2, 2), pad=(3, 3)))
   push!(layers, BatchNorm(inplanes, λ=relu))
   push!(layers, MaxPool((3, 3), stride=(2, 2), pad=(1, 1)))
   inplanes = 64
   for nrepeats in block_config
-    for i in 1:nrepeats
+    for i in 1:nrepeats-1
       for expansion in channel_config
         outplanes = inplanes * expansion
         push!(layers, SkipConnection(block(inplanes, outplanes, i == 1),
-                                     shortcut(inplanes, outplanes, stride)))
-          
+                                     identity(inplanes, outplanes, stride)))
       end
     end 
     inplanes *= 2
+    push!(layers, SkipConnection(block(inplanes, outplanes, i == 1),
+                                 projection(inplanes, outplanes, stride)))
   end
   push!(layers, AdaptiveMeanPool(1, 1))
   push!(layers, x -> flatten(x, 1))
   push!(layers, Dense(512 * expansion, 1000))
-
   Flux.testmode!(layers)
   return layers
 end
@@ -61,12 +61,12 @@ Dict("resnet18" => ([1, 1], [2, 2, 2, 2]),
      "resnet101" => ([1, 1, 4], [3, 4, 23, 3]),
      "resnet152" => ([1, 1, 4], [3, 8, 36, 3]))
 
-ResNet18() = resnet(resnet_config["resnet18"]...)
+ResNet18() = resnet(basicblock, resnet_config["resnet18"]...)
 
-ResNet34() = resnet(resnet_config["resnet34"]...)
+ResNet34() = resnet(basicblock, resnet_config["resnet34"]...)
 
-ResNet50() = resnet(resnet_config["resnet50"]...)
+ResNet50() = resnet(bottleneck, resnet_config["resnet50"]...)
 
-ResNet101() = resnet(resnet_config["resnet101"]...)
+ResNet101() = resnet(bottleneck, resnet_config["resnet101"]...)
 
-ResNet152() = resnet(resnet_config["resnet152"]...)
+ResNet152() = resnet(bottleneck, resnet_config["resnet152"]...)
