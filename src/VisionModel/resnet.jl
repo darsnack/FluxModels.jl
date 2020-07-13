@@ -26,9 +26,10 @@ bottleneck(inplanes::Int, outchannels, downsample::Bool = false) = downsample ?
 
 projection(inplanes::Int, outplanes::Int, stride::Int) = Chain(Conv((1, 1), inplanes => outplanes, stride=stride),
                                                                BatchNorm((outplanes), λ=relu))
-
+# array -> PaddedView(0, array, outplanes) for zero padding arrays
 identity(inplanes::Int, outplanes::Int, stride::Int) = inplanes < outplanes ? 
-  Array -> PaddedView(0, Array, outplanes) : +
+ array ->  cat(array, zeros(Float32, outplanes - inplanes); dims = (1, 2, 3)) :
+  +
 
 function resnet(block, shortcut_config, channel_config, block_config)
   layers = []
@@ -39,7 +40,6 @@ function resnet(block, shortcut_config, channel_config, block_config)
   baseplanes = 64
   for nrepeats in block_config
     outplanes = baseplanes .* channel_config
-    push!(layers, block(inplanes, outplanes, true))
     if shortcut_config == :A
       push!(layers, SkipConnection(block(inplanes, outplanes, true), 
                                    identity(inplanes, outplanes, 2)))
@@ -48,13 +48,13 @@ function resnet(block, shortcut_config, channel_config, block_config)
                                    projection(inplanes, outplanes[end], 2)))
     end
     inplanes = outplanes[end]
-    for i in 1:nrepeats
+    for i in 2:nrepeats
       if shortcut_config == :A || shortcut_config == :B
         push!(layers, SkipConnection(block(inplanes, outplanes, false),
-                                     identity(inplanes, outplanes[end], 2)))
+                                     identity(inplanes, outplanes[end], 1)))
       elseif shortcut_config == :C
         push!(layers, SkipConnection(block(inplanes, outplanes, false),
-                                     projection(inplanes, outplanes, 2)))
+                                     projection(inplanes, outplanes, 1)))
       end
       inplanes = outplanes[end]
     end
@@ -62,7 +62,7 @@ function resnet(block, shortcut_config, channel_config, block_config)
   end
   push!(layers, AdaptiveMeanPool(1, 1))
   push!(layers, x -> flatten(x, 1))
-  push!(layers, Dense(512 * expansion, 1000))
+  push!(layers, Dense(512 * inplanes, 1000))
   Flux.testmode!(layers)
   return layers
 end
@@ -74,12 +74,12 @@ Dict("resnet18" => ([1, 1], [2, 2, 2, 2]),
      "resnet101" => ([1, 1, 4], [3, 4, 23, 3]),
      "resnet152" => ([1, 1, 4], [3, 8, 36, 3]))
 
-ResNet18() = resnet(basicblock, ":A", resnet_config["resnet18"]...)
+ResNet18() = resnet(basicblock, :A, resnet_config["resnet18"]...)
 
-ResNet34() = resnet(basicblock, ":A", resnet_config["resnet34"]...)
+ResNet34() = resnet(basicblock, :A, resnet_config["resnet34"]...)
 
-ResNet50() = resnet(bottleneck, ":B", resnet_config["resnet50"]...)
+ResNet50() = resnet(bottleneck, :B, resnet_config["resnet50"]...)
 
-ResNet101() = resnet(bottleneck, ":B", resnet_config["resnet101"]...)
+ResNet101() = resnet(bottleneck, :B, resnet_config["resnet101"]...)
 
-ResNet152() = resnet(bottleneck, ":B", resnet_config["resnet152"]...)
+ResNet152() = resnet(bottleneck, :B, resnet_config["resnet152"]...)
