@@ -1,6 +1,9 @@
+using Flux
 using FluxModels
 using Test
 
-@testset "FluxModels.jl" begin
-    # Write your tests here.
+@info "Testing Flux Models..."
+@testset "Testing Vision Models" begin
+    include("VisionModel/alexnet.jl")
+    include("VisionModel/resnet.jl")
 end
