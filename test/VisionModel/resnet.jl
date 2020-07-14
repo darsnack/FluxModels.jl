@@ -1,7 +1,4 @@
-using Flux
-using Test
-
-@testset "Testing ResNet Models" begin
+@testset "ResNet" begin
   for MODEL in [
     ResNet18,
     ResNet34,
