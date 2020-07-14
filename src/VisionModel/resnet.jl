@@ -28,8 +28,7 @@ projection(inplanes::Int, outplanes::Int, stride::Int) = Chain(Conv((1, 1), inpl
                                                                BatchNorm((outplanes), λ=relu))
 # array -> PaddedView(0, array, outplanes) for zero padding arrays
 identity(inplanes::Int, outplanes::Int, stride::Int) = inplanes < outplanes ? 
- array ->  cat(array, zeros(Float32, outplanes - inplanes); dims = (1, 2, 3)) :
-  +
+ array ->  cat(array, zeros(Float32, outplanes - inplanes); dims = (1, 2, 3)) : +
 
 function resnet(block, shortcut_config, channel_config, block_config)
   layers = []
@@ -62,7 +61,7 @@ function resnet(block, shortcut_config, channel_config, block_config)
   end
   push!(layers, AdaptiveMeanPool(1, 1))
   push!(layers, x -> flatten(x, 1))
-  push!(layers, Dense(512 * inplanes, 1000))
+  push!(layers, Dense(inplanes, 1000))
   Flux.testmode!(layers)
   return layers
 end
