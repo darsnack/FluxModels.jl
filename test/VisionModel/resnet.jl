@@ -6,7 +6,6 @@
     ResNet101,
     ResNet152,
     ]   
-    @info "Testing $(MODEL)..."
     model = MODEL()
     @test size(model(rand(256, 256, 3, 50))) == (1000, 50)
   end
