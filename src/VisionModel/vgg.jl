@@ -28,7 +28,7 @@ end
 function convolutional_layers(config, batchnorm, inchannels)
   layers = []
   ifilters = inchannels
-  for c in configs[config]
+  for c in config
     push!(layers, vgg_block(ifilters, c..., batchnorm)...)
     push!(layers, MaxPool((2,2)))
     ifilters, _ = c
@@ -53,37 +53,37 @@ function classifier_layers(imsize, nclasses, fcsize, dropout)
   return layers
 end
 
-function vgg(imsize; config, batchnorm=false, nclasses)
-  conv = convolutional_layers(config, batchnorm, 3)
-  class = classifier_layers(imsize, nclasses, 4096, 0.5)
+function vgg(imsize; config, batchnorm=false, nclasses, fcsize, dropout)
+  conv = convolutional_layers(config, batchnorm, inplanes)
+  class = classifier_layers(imsize, nclasses, fcsize, dropout)
   return Chain(conv..., class...)
 end
 
-const configs = Dict(:A => [(64,1) (128,1) (256,2) (512,2) (512,2)],
-                     :B => [(64,2) (128,2) (256,2) (512,2) (512,2)],
-                     :D => [(64,2) (128,2) (256,3) (512,3) (512,3)],
-                     :E => [(64,2) (128,2) (256,4) (512,4) (512,4)])
+const configs = Dict(:A => [(64,1), (128,1), (256,2), (512,2), (512,2)],
+                     :B => [(64,2), (128,2), (256,2), (512,2), (512,2)],
+                     :D => [(64,2), (128,2), (256,3), (512,3), (512,3)],
+                     :E => [(64,2), (128,2), (256,4), (512,4), (512,4)])
 
-vgg11(imsize; nclasses) =
-  vgg(imsize, config=:A, nclasses=nclasses)
+vgg11(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+  vgg(imsize, config=configs[:A], inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg11bn(imsize; nclasses) =
-  vgg(imsize, config=:A, batchnorm=true, nclasses=nclasses)
+vgg11bn(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+  vgg(imsize, config=configs[:A], batchnorm=true, inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg13(imsize; nclasses) =
-  vgg(imsize, config=:B, nclasses=nclasses)
+vgg13(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+  vgg(imsize, config=configs[:B], inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg13bn(imsize; nclasses) =
-  vgg(imsize, config=:B, batchnorm=true, nclasses=nclasses)
+vgg13bn(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+  vgg(imsize, config=configs[:B], batchnorm=true, inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg16(imsize; nclasses) =
-  vgg(imsize, config=:D, nclasses=nclasses)
+vgg16(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+  vgg(imsize, config=configs[:D], inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg16bn(imsize; nclasses) =
-  vgg(imsize, config=:D, batchnorm=true, nclasses=nclasses)
+vgg16bn(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+  vgg(imsize, config=configs[:D], batchnorm=true, inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg19(imsize; nclasses) =
-  vgg(imsize, config=:E, nclasses=nclasses)
+vgg19(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+  vgg(imsize, config=configs[:E], inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg19bn(imsize; nclasses) =
-  vgg(imsize, config=:E, batchnorm=true, nclasses=nclasses)
+vgg19bn(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+  vgg(imsize, config=configs[:E], batchnorm=true, inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
