@@ -1,5 +1,4 @@
 using Flux
-using FluxModels
 using Test
 
 @testset "Vision Models" begin
