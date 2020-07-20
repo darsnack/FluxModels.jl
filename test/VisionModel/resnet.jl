@@ -1,3 +1,7 @@
+using Flux
+using FluxModels
+using Test
+
 @testset "ResNet" begin
   for MODEL in [
     ResNet18,
