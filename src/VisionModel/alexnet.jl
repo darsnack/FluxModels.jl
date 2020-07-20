@@ -9,7 +9,7 @@ function alexnet()
                  Conv((3, 3), 384=>256, relu, pad=(1, 1)),
                  Conv((3, 3), 256=>256, relu, pad=(1, 1)),
                  MaxPool((3, 3), stride=(2, 2)),
-                 AdaptiveAvgPool((6,6)),
+                 AdaptiveMeanPool((6,6)),
                  x -> flatten(x, 1),
                  Dropout(),
                  Dense(256 * 6 * 6, 4096, relu),
