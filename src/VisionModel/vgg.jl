@@ -1,5 +1,7 @@
 using Flux
 
+export vgg11, vgg11bn, vgg13, vgg13bn, vgg16, vgg16bn, vgg19, vgg19bn
+
 # Build a VGG block
 #  ifilters: number of input filters
 #  ofilters: number of output filters

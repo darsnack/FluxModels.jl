@@ -2,7 +2,7 @@ using Flux
 
 export ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
 
-basicblock(inplanes::Int, outchannels, downsample::Bool = false) = downsample ? 
+basicblock(inplanes, outchannels, downsample = false) = downsample ? 
   Chain(Conv((3, 3), inplanes => outchannels[1], stride = 2),
         BatchNorm(outchannels[1], λ = relu),
         Conv((3, 3), outchannels[1] => outchannels[2], stride = 1, pad = 1),
@@ -12,7 +12,7 @@ basicblock(inplanes::Int, outchannels, downsample::Bool = false) = downsample ?
         Conv((3, 3), outchannels[1] => outchannels[2], stride = 1, pad = 1),
         BatchNorm(outchannels[2], λ=relu))
 
-bottleneck(inplanes::Int, outchannels, downsample::Bool = false) = downsample ?
+bottleneck(inplanes, outchannels, downsample = false) = downsample ?
   Chain(Conv((1, 1), inplanes => outchannels[1], stride = 2),
         BatchNorm(outchannels[1], λ = relu),
         Conv((3, 3), outchannels[1] => outchannels[2], stride = 1, pad = 1),
@@ -26,10 +26,10 @@ bottleneck(inplanes::Int, outchannels, downsample::Bool = false) = downsample ?
         Conv((1, 1), outchannels[2] => outchannels[3], stride = 1),
         BatchNorm(outchannels[3], λ = relu))
 
-projection(inplanes::Int, outplanes::Int, stride::Int) = Chain(Conv((1, 1), inplanes => outplanes, stride=stride),
+projection(inplanes, outplanes, stride) = Chain(Conv((1, 1), inplanes => outplanes, stride=stride),
                                                                BatchNorm((outplanes), λ=relu))
 # array -> PaddedView(0, array, outplanes) for zero padding arrays
-identity(inplanes::Int, outplanes::Int, stride::Int) = inplanes < outplanes ? 
+identity(inplanes, outplanes, stride) = inplanes < outplanes ? 
  array ->  cat(array, zeros(Float32, outplanes - inplanes); dims = (1, 2, 3)) : +
 
 function resnet(block, shortcut_config, channel_config, block_config)
@@ -62,7 +62,7 @@ function resnet(block, shortcut_config, channel_config, block_config)
     baseplanes *= 2
   end
   push!(layers, AdaptiveMeanPool(1, 1))
-  push!(layers, x -> flatten(x, 1))
+  push!(layers, flatten)
   push!(layers, Dense(inplanes, 1000))
   Flux.testmode!(layers)
   return layers
