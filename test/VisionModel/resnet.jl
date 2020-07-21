@@ -3,14 +3,9 @@ using FluxModels
 using Test
 
 @testset "ResNet" begin
-  for MODEL in [
-    ResNet18,
-    ResNet34,
-    ResNet50,
-    ResNet101,
-    ResNet152,
-    ]   
-    model = MODEL()
-    @test size(model(rand(256, 256, 3, 50))) == (1000, 50)
-  end
+    @test size(ResNet18(rand(256, 256, 3, 50))) == (1000, 50),
+    @test size(ResNet34(rand(256, 256, 3, 50))) == (1000, 50),
+    @test size(ResNet50(rand(256, 256, 3, 50))) == (1000, 50),
+    @test size(ResNet101(rand(256, 256, 3, 50))) == (1000, 50),
+    @test size(ResNet152(rand(256, 256, 3, 50))) == (1000, 50)
 end
