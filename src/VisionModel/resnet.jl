@@ -33,8 +33,10 @@ function projection(inplanes, outplanes, stride)
 end
 
 # array -> PaddedView(0, array, outplanes) for zero padding arrays
-identity(inplanes, outplanes, stride) = (outplanes[1] > inplanes) ? 
-  array ->  cat(array, zeros(eltype(array), outplanes[1] - inplanes); dims = (1, 2, 3)) : +
+function identity(inplanes, outplanes, stride)
+  shortcut = (outplanes[1] > inplanes) ? 
+    array ->  cat(array, zeros(eltype(array), outplanes[1] - inplanes); dims = (1, 2, 3)) : +
+  return (x, y) -> x + shortcut(y)
 
 function resnet(block, shortcut_config, channel_config, block_config)
   inplanes = 64
