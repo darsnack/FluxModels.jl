@@ -2,35 +2,35 @@ using Flux
 
 export ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
 
-basicblock(inplanes, outchannels, downsample = false) = downsample ? 
-  Chain(Conv((3, 3), inplanes => outchannels[1], stride = 2),
-        BatchNorm(outchannels[1], relu),
-        Conv((3, 3), outchannels[1] => outchannels[2], stride = 1, pad = 1),
-        BatchNorm(outchannels[2], relu)) : 
-  Chain(Conv((3, 3), inplanes => outchannels[1], stride = 1),
-        BatchNorm(outchannels[1], relu),
-        Conv((3, 3), outchannels[1] => outchannels[2], stride = 1, pad = 1),
-        BatchNorm(outchannels[2], relu))
+basicblock(inplanes, outplanes, downsample = false) = downsample ? 
+  Chain(Conv((3, 3), inplanes => outplanes[1], stride = 2),
+        BatchNorm(outplanes[1], relu),
+        Conv((3, 3), outplanes[1] => outplanes[2], stride = 1, pad = 1),
+        BatchNorm(outplanes[2], relu)) : 
+  Chain(Conv((3, 3), inplanes => outplanes[1], stride = 1),
+        BatchNorm(outplanes[1], relu),
+        Conv((3, 3), outplanes[1] => outplanes[2], stride = 1, pad = 1),
+        BatchNorm(outplanes[2], relu))
 
-bottleneck(inplanes, outchannels, downsample = false) = downsample ?
-  Chain(Conv((1, 1), inplanes => outchannels[1], stride = 2),
-        BatchNorm(outchannels[1], relu),
-        Conv((3, 3), outchannels[1] => outchannels[2], stride = 1, pad = 1),
-        BatchNorm(outchannels[2], relu),
-        Conv((1, 1), outchannels[2] => outchannels[3], stride = 1),
-        BatchNorm(outchannels[3], relu)) :
-  Chain(Conv((1, 1), inplanes => outchannels[1], stride = 1),
-        BatchNorm(outchannels[1], relu),
-        Conv((3, 3), outchannels[1] => outchannels[2], stride = 1, pad = 1),
-        BatchNorm(outchannels[2], relu),
-        Conv((1, 1), outchannels[2] => outchannels[3], stride = 1),
-        BatchNorm(outchannels[3], relu))
+bottleneck(inplanes, outplanes, downsample = false) = downsample ?
+  Chain(Conv((1, 1), inplanes => outplanes[1], stride = 2),
+        BatchNorm(outplanes[1], relu),
+        Conv((3, 3), outplanes[1] => outplanes[2], stride = 1, pad = 1),
+        BatchNorm(outplanes[2], relu),
+        Conv((1, 1), outplanes[2] => outplanes[3], stride = 1),
+        BatchNorm(outplanes[3], relu)) :
+  Chain(Conv((1, 1), inplanes => outplanes[1], stride = 1),
+        BatchNorm(outplanes[1], relu),
+        Conv((3, 3), outplanes[1] => outplanes[2], stride = 1, pad = 1),
+        BatchNorm(outplanes[2], relu),
+        Conv((1, 1), outplanes[2] => outplanes[3], stride = 1),
+        BatchNorm(outplanes[3], relu))
 
 projection(inplanes, outplanes, stride) = Chain(Conv((1, 1), inplanes => outplanes, stride=stride),
                                                                BatchNorm((outplanes), relu))
 # array -> PaddedView(0, array, outplanes) for zero padding arrays
 identity(inplanes, outplanes, stride) = (outplanes[1] > inplanes) ? 
-  array ->  cat(array, zeros(eltype(array), outplanes - inplanes); dims = (1, 2, 3)) : +
+  array ->  cat(array, zeros(eltype(array), outplanes[1] - inplanes); dims = (1, 2, 3)) : +
 
 function resnet(block, shortcut_config, channel_config, block_config)
   inplanes = 64
@@ -64,7 +64,7 @@ function resnet(block, shortcut_config, channel_config, block_config)
   push!(layers, AdaptiveMeanPool((1, 1)))
   push!(layers, flatten)
   push!(layers, Dense(inplanes, 1000))
-  Flux.testmode!(layers)
+  Flux.testmode!(layers, false)
   return layers
 end
 
