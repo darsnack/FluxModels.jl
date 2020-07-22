@@ -26,8 +26,12 @@ bottleneck(inplanes, outplanes, downsample = false) = downsample ?
         Conv((1, 1), outplanes[2] => outplanes[3], stride = 1),
         BatchNorm(outplanes[3], relu))
 
-projection(inplanes, outplanes, stride) = Chain(Conv((1, 1), inplanes => outplanes, stride=stride),
-                                                               BatchNorm((outplanes), relu))
+function projection(inplanes, outplanes, stride)
+  shortcut = Chain(Conv((1, 1), inplanes => outplanes, stride=stride),
+                   BatchNorm((outplanes), relu))
+  return (x, y) -> x + shortcut(y)
+end
+
 # array -> PaddedView(0, array, outplanes) for zero padding arrays
 identity(inplanes, outplanes, stride) = (outplanes[1] > inplanes) ? 
   array ->  cat(array, zeros(eltype(array), outplanes[1] - inplanes); dims = (1, 2, 3)) : +
