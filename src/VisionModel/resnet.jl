@@ -64,6 +64,7 @@ function resnet(block, shortcut_config, channel_config, block_config)
   push!(layers, AdaptiveMeanPool((1, 1)))
   push!(layers, flatten)
   push!(layers, Dense(inplanes, 1000))
+  layers = Chain(layers...)
   Flux.testmode!(layers, false)
   return layers
 end
