@@ -34,9 +34,9 @@ end
 
 # array -> PaddedView(0, array, outplanes) for zero padding arrays
 function identity(inplanes, outplanes, stride)
-  shortcut = (outplanes[1] > inplanes) ? 
-    array ->  cat(array, zeros(eltype(array), outplanes[1] - inplanes); dims = (1, 2, 3)) : +
-  return (x, y) -> x + shortcut(y)
+  shortcut = array ->  convert(Array{Float32}, cat(array, zeros(eltype(array), outplanes[end] - inplanes)); dims = (1, 2, 3))
+  return (outplanes[end] > inplanes) ? (x, y) -> x + shortcut(y) : +
+end
 
 function resnet(block, shortcut_config, channel_config, block_config)
   inplanes = 64
