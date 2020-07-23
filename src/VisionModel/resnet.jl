@@ -34,7 +34,7 @@ end
 
 # array -> PaddedView(0, array, outplanes) for zero padding arrays
 function identity(inplanes, outplanes, stride)
-  shortcut = array ->  convert(Array{Float32}, cat(array, zeros(eltype(array), outplanes[end] - inplanes)); dims = (1, 2, 3))
+  shortcut = array -> cat(array, zeros(eltype(array), size(array, 1), size(array, 2), outplanes[end] - inplanes, size(array, 4)); dims = 3)
   return (outplanes[end] > inplanes) ? (x, y) -> x + shortcut(y) : +
 end
 
@@ -47,26 +47,21 @@ function resnet(block, shortcut_config, channel_config, block_config)
   push!(layers, MaxPool((3, 3), stride=(2, 2), pad=(1, 1)))
   for nrepeats in block_config
     outplanes = baseplanes .* channel_config
-    println(outplanes)
     if shortcut_config == :A
       push!(layers, SkipConnection(block(inplanes, outplanes, true), 
                                    identity(inplanes, outplanes, 2)))
-      println(inplanes, outplanes)
     elseif shortcut_config == :B || shortcut_config == :C
       push!(layers, SkipConnection(block(inplanes, outplanes, true),
                                    projection(inplanes, outplanes[end], 2)))
-      println(inplanes, outplanes)
     end
     inplanes = outplanes[end]
     for i in 2:nrepeats
       if shortcut_config == :A || shortcut_config == :B
         push!(layers, SkipConnection(block(inplanes, outplanes, false),
                                      identity(inplanes, outplanes[end], 1)))
-        println(inplanes, outplanes)
       elseif shortcut_config == :C
         push!(layers, SkipConnection(block(inplanes, outplanes, false),
                                      projection(inplanes, outplanes, 1)))
-        println(inplanes, outplanes)
       end
       inplanes = outplanes[end]
     end
