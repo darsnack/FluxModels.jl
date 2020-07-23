@@ -2,12 +2,12 @@ using Flux
 
 export ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
 
-basicblock(inplanes, outplanes, downsample = false) = downsample ? 
-  Chain(Conv((3, 3), inplanes => outplanes[1], stride = 2),
+basicblock(inplanes, outplanes, downsample = false) = downsample ?
+  Chain(Conv((3, 3), inplanes => outplanes[1], stride = 2, pad = 1),
         BatchNorm(outplanes[1], relu),
         Conv((3, 3), outplanes[1] => outplanes[2], stride = 1, pad = 1),
-        BatchNorm(outplanes[2], relu)) : 
-  Chain(Conv((3, 3), inplanes => outplanes[1], stride = 1),
+        BatchNorm(outplanes[2], relu)) :
+  Chain(Conv((3, 3), inplanes => outplanes[1], stride = 1, pad = 1),
         BatchNorm(outplanes[1], relu),
         Conv((3, 3), outplanes[1] => outplanes[2], stride = 1, pad = 1),
         BatchNorm(outplanes[2], relu))
@@ -34,8 +34,16 @@ end
 
 # array -> PaddedView(0, array, outplanes) for zero padding arrays
 function identity(inplanes, outplanes, stride)
-  shortcut = array ->  convert(Array{Float32}, cat(array, zeros(eltype(array), outplanes[end] - inplanes)); dims = (1, 2, 3))
-  return (outplanes[end] > inplanes) ? (x, y) -> x + shortcut(y) : +
+  if outplanes[end] > inplanes
+    pool = MaxPool((1, 1), stride = 2)
+    return (x, y) -> begin
+      y = pool(y)
+      y = cat(y, zeros(eltype(y), size(y, 1), size(y, 2), outplanes[end] - inplanes, size(y, 4)); dims = 3)
+      x + y
+    end
+  else
+    return +
+  end
 end
 
 function resnet(block, shortcut_config, channel_config, block_config)
@@ -45,28 +53,23 @@ function resnet(block, shortcut_config, channel_config, block_config)
   push!(layers, Conv((7, 7), 3=>inplanes, stride=(2, 2), pad=(3, 3)))
   push!(layers, BatchNorm(inplanes, relu))
   push!(layers, MaxPool((3, 3), stride=(2, 2), pad=(1, 1)))
-  for nrepeats in block_config
+  for (i, nrepeats) in enumerate(block_config)
     outplanes = baseplanes .* channel_config
-    println(outplanes)
     if shortcut_config == :A
-      push!(layers, SkipConnection(block(inplanes, outplanes, true), 
+      push!(layers, SkipConnection(block(inplanes, outplanes, i != 1),
                                    identity(inplanes, outplanes, 2)))
-      println(inplanes, outplanes)
     elseif shortcut_config == :B || shortcut_config == :C
-      push!(layers, SkipConnection(block(inplanes, outplanes, true),
+      push!(layers, SkipConnection(block(inplanes, outplanes, i != 1),
                                    projection(inplanes, outplanes[end], 2)))
-      println(inplanes, outplanes)
     end
     inplanes = outplanes[end]
-    for i in 2:nrepeats
+    for j in 2:nrepeats
       if shortcut_config == :A || shortcut_config == :B
         push!(layers, SkipConnection(block(inplanes, outplanes, false),
                                      identity(inplanes, outplanes[end], 1)))
-        println(inplanes, outplanes)
       elseif shortcut_config == :C
         push!(layers, SkipConnection(block(inplanes, outplanes, false),
                                      projection(inplanes, outplanes, 1)))
-        println(inplanes, outplanes)
       end
       inplanes = outplanes[end]
     end
