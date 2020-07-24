@@ -36,7 +36,7 @@ function projection(inplanes, outplanes, downsample = false)
 end
 
 # array -> PaddedView(0, array, outplanes) for zero padding arrays
-function identity(inplanes, outplanes, stride)
+function identity(inplanes, outplanes)
   if outplanes[end] > inplanes
     pool = MaxPool((1, 1), stride = 2)
     return (x, y) -> begin
@@ -60,7 +60,7 @@ function resnet(block, shortcut_config, channel_config, block_config)
     outplanes = baseplanes .* channel_config
     if shortcut_config == :A
       push!(layers, SkipConnection(block(inplanes, outplanes, i != 1),
-                                   identity(inplanes, outplanes, 2)))
+                                   identity(inplanes, outplanes)))
     elseif shortcut_config == :B || shortcut_config == :C
       push!(layers, SkipConnection(block(inplanes, outplanes, i != 1),
                                    projection(inplanes, outplanes[end], i != 1)))
@@ -69,10 +69,10 @@ function resnet(block, shortcut_config, channel_config, block_config)
     for j in 2:nrepeats
       if shortcut_config == :A || shortcut_config == :B
         push!(layers, SkipConnection(block(inplanes, outplanes, false),
-                                     identity(inplanes, outplanes[end], 1)))
+                                     identity(inplanes, outplanes[end])))
       elseif shortcut_config == :C
         push!(layers, SkipConnection(block(inplanes, outplanes, false),
-                                     projection(inplanes, outplanes, 1)))
+                                     projection(inplanes, outplanes, false)))
       end
       inplanes = outplanes[end]
     end
