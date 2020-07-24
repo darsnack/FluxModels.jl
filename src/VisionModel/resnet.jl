@@ -26,9 +26,12 @@ bottleneck(inplanes, outplanes, downsample = false) = downsample ?
         Conv((1, 1), outplanes[2] => outplanes[3], stride = 1),
         BatchNorm(outplanes[3], relu))
 
-function projection(inplanes, outplanes, stride)
-  shortcut = Chain(Conv((1, 1), inplanes => outplanes, stride=stride),
-                   BatchNorm((outplanes), relu))
+function projection(inplanes, outplanes, downsample = false)
+  shortcut = downsample ? 
+    Chain(Conv((1, 1), inplanes => outplanes, stride = 2),
+          BatchNorm((outplanes), relu)) :
+    Chain(Conv((1, 1), inplanes => outplanes, stride = 1),
+          BatchNorm((outplanes), relu))
   return (x, y) -> x + shortcut(y)
 end
 
@@ -60,7 +63,7 @@ function resnet(block, shortcut_config, channel_config, block_config)
                                    identity(inplanes, outplanes, 2)))
     elseif shortcut_config == :B || shortcut_config == :C
       push!(layers, SkipConnection(block(inplanes, outplanes, i != 1),
-                                   projection(inplanes, outplanes[end], 2)))
+                                   projection(inplanes, outplanes[end], i != 1)))
     end
     inplanes = outplanes[end]
     for j in 2:nrepeats
