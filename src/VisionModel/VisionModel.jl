@@ -1,6 +1,6 @@
 module VisionModel
 
-using Flux, Images
+using Flux
 
 # Models
 include("alexnet.jl")
