@@ -33,9 +33,9 @@ function googlenet(inplanes, )
                  MaxPool((3,3), stride=2, pad=1),
                  inception_block(832, 256, 160, 320, 32, 128, 128),
                  inception_block(832, 384, 192, 384, 48, 128, 128),
-                 MeanPool((7,7), stride=1),
+                 AdaptiveMeanPool((1,1)),
                  flatten(),
-                 Dropout(0.4),
+                 Dropout(0.2),
                  Dense(1024, 1000))
   Flux.testmode!(layers, false)
   return layers
