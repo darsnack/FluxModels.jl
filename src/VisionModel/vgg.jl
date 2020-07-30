@@ -66,26 +66,26 @@ const configs = Dict(:A => [(64,1), (128,1), (256,2), (512,2), (512,2)],
                      :D => [(64,2), (128,2), (256,3), (512,3), (512,3)],
                      :E => [(64,2), (128,2), (256,4), (512,4), (512,4)])
 
-vgg11(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+vgg11(imsize; inchannels=3, nclasses=1000, fcsize=4096, dropout=0.5) =
   vgg(imsize, config=configs[:A], inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg11bn(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+vgg11bn(imsize; inchannels=3, nclasses=1000, fcsize=4096, dropout=0.5) =
   vgg(imsize, config=configs[:A], batchnorm=true, inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg13(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+vgg13(imsize; inchannels=3, nclasses=1000, fcsize=4096, dropout=0.5) =
   vgg(imsize, config=configs[:B], inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg13bn(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+vgg13bn(imsize; inchannels=3, nclasses=1000, fcsize=4096, dropout=0.5) =
   vgg(imsize, config=configs[:B], batchnorm=true, inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg16(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+vgg16(imsize; inchannels=3, nclasses=1000, fcsize=4096, dropout=0.5) =
   vgg(imsize, config=configs[:D], inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg16bn(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+vgg16bn(imsize; inchannels=3, nclasses=1000, fcsize=4096, dropout=0.5) =
   vgg(imsize, config=configs[:D], batchnorm=true, inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg19(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+vgg19(imsize; inchannels=3, nclasses=1000, fcsize=4096, dropout=0.5) =
   vgg(imsize, config=configs[:E], inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
 
-vgg19bn(imsize; inchannels=3, nclasses, fcsize=4096, dropout=0.5) =
+vgg19bn(imsize; inchannels=3, nclasses=1000, fcsize=4096, dropout=0.5) =
   vgg(imsize, config=configs[:E], batchnorm=true, inchannels=inchannels, nclasses=nclasses, fcsize=fcsize, dropout=dropout)
