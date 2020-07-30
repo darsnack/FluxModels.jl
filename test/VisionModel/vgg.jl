@@ -1,4 +1,4 @@
-sing Flux
+using Flux
 using FluxModels
 using Test
 
