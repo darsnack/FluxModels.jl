@@ -1,3 +1,5 @@
+using Flux
+
 export googlenet
 
 function conv_block(inplanes, outplanes, stride, pad, kernel_size)
@@ -24,7 +26,7 @@ function inception_block(inplanes, out_1x1, red_3x3, out_3x3, red_5x5, out_5x5, 
   return inception_layer
 end
 
-function googlenet(inplanes, )
+function googlenet()
   layers = Chain(conv_block(inplanes=3, outplanes=64, stride=2, pad=3, kernel_size=(7,7)),
                  MaxPool((3,3), stride=2, pad=1),
                  conv_block(inplanes=64, outplanes=64, kernel_size=(1,1)),
