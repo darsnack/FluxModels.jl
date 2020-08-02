@@ -16,7 +16,7 @@ function inceptionblock(inplanes, out_1x1, red_3x3, out_3x3, red_5x5, out_5x5, p
              conv_block((3,3), red_3x3, out_3x3; pad=1)...)        
 
   branch3 = Chain(conv_block((1,1), inplanes, red_5x5)...,
-             conv_block((5,5), red_5x5, out_5x5; pad=1)...) 
+             conv_block((5,5), red_5x5, out_5x5; pad=2)...) 
 
   branch4 = Chain(MaxPool((3, 3), stride=1, pad=1),
              conv_block((1,1), inplanes, pool_proj)...)
