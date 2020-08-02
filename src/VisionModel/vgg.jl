@@ -1,4 +1,4 @@
-using Flux: convfilter, Zeros
+using Flux: convfilter, Zeros, outdims
 
 # Build a VGG block
 #  ifilters: number of input filters
@@ -37,14 +37,14 @@ function convolutional_layers(config, batchnorm, inchannels)
 end
 
 # Build classification layers
-#  imsize: image size
+#  imsize: image size (w, h, c)
 #  nclasses: number of classes
 #  fcsize: size of fully connected layers (usefull for smaller nclasses than ImageNet)
 #  dropout: dropout obviously
 function classifier_layers(imsize, nclasses, fcsize, dropout)
   layers = []
   push!(layers, flatten)
-  push!(layers, Dense(Int(prod(imsize) / 2), fcsize, relu))
+  push!(layers, Dense(Int(prod(imsize)), fcsize, relu))
   push!(layers, Dropout(dropout))
   push!(layers, Dense(fcsize, fcsize, relu))
   push!(layers, Dropout(dropout))
@@ -55,7 +55,8 @@ end
 
 function vgg(imsize; config, inchannels, batchnorm=false, nclasses, fcsize, dropout)
   conv = convolutional_layers(config, batchnorm, inchannels)
-  class = classifier_layers(imsize, nclasses, fcsize, dropout)
+  imsize = foldl((insize, layer) -> outdims(layer, insize), conv; init = imsize)
+  class = classifier_layers((imsize..., config[end][1]), nclasses, fcsize, dropout)
   return Chain(conv..., class...)
 end
 
