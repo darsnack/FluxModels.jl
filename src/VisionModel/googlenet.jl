@@ -10,22 +10,22 @@ function conv_block(kernelsize::Tuple{Int64,Int64}, inplanes::Int64, outplanes::
 end
 
 function inceptionblock(inplanes, out_1x1, red_3x3, out_3x3, red_5x5, out_5x5, pool_proj)
-  branch1 = conv_block((1,1), inplanes, out_1x1)
+  branch1 = Chain(conv_block((1,1), inplanes, out_1x1)...)
 
-  branch2 = Chain(conv_block((1,1), inplanes, red_3x3),
-             conv_block((3,3), red_3x3, out_3x3; pad=1))        
+  branch2 = Chain(conv_block((1,1), inplanes, red_3x3)...,
+             conv_block((3,3), red_3x3, out_3x3; pad=1)...)        
 
-  branch3 = Chain(conv_block((1,1), inplanes, red_5x5),
-             conv_block((5,5), red_5x5, out_5x5; pad=1)) 
+  branch3 = Chain(conv_block((1,1), inplanes, red_5x5)...,
+             conv_block((5,5), red_5x5, out_5x5; pad=1)...) 
 
   branch4 = Chain(MaxPool((3, 3), stride=1, pad=1),
-             conv_block((1,1), inplanes, pool_proj))
+             conv_block((1,1), inplanes, pool_proj)...)
 
   inception_layer = x -> begin
-    y1 = branch1[1](x)
-    y2 = branch2[2][1](branch2[1][1](x))
-    y3 = branch3[2][1](branch3[1][1](x))
-    y4 = branch4[2][1](branch4[1](x))
+    y1 = branch1(x)
+    y2 = branch2(x)
+    y3 = branch3(x)
+    y4 = branch4(x)
   
     return cat(y1, y2, y3, y4; dims=3)
 
