@@ -1,7 +1,3 @@
-using Flux
-
-export ResNet18, ResNet34, ResNet50, ResNet101, ResNet152
-
 basicblock(inplanes, outplanes, downsample = false) = downsample ?
   Chain(Conv((3, 3), inplanes => outplanes[1], stride = 2, pad = 1),
         BatchNorm(outplanes[1], relu),

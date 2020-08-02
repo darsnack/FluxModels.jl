@@ -1,7 +1,3 @@
-using Flux
-
-export googlenet
-
 function conv_block(kernelsize::Tuple{Int64,Int64}, inplanes::Int64, outplanes::Int64; stride::Int64=1, pad::Int64=0)
   conv_layer = []
   push!(conv_layer, Conv(kernelsize, inplanes => outplanes, stride = stride, pad = pad)) 

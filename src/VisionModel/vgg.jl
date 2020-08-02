@@ -1,6 +1,4 @@
-using Flux
-
-export vgg11, vgg11bn, vgg13, vgg13bn, vgg16, vgg16bn, vgg19, vgg19bn
+using Flux: convfilter, Zeros
 
 # Build a VGG block
 #  ifilters: number of input filters
