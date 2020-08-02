@@ -1,5 +1,3 @@
-export alexnet
-
 function alexnet()
   layers = Chain(Conv((11, 11), 3=>64, stride=(4, 4), relu, pad=(2, 2)),
                  MaxPool((3, 3), stride=(2, 2)),
