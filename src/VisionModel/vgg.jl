@@ -55,8 +55,8 @@ function classifier_layers(imsize, nclasses, fcsize, dropout)
   return layers
 end
 
-function vgg(imsize; config, batchnorm=false, nclasses, fcsize, dropout)
-  conv = convolutional_layers(config, batchnorm, inplanes)
+function vgg(imsize; config, inchannels, batchnorm=false, nclasses, fcsize, dropout)
+  conv = convolutional_layers(config, batchnorm, inchannels)
   class = classifier_layers(imsize, nclasses, fcsize, dropout)
   return Chain(conv..., class...)
 end

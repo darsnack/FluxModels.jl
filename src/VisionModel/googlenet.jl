@@ -52,7 +52,7 @@ function googlenet()
                  inceptionblock(832, 384, 192, 384, 48, 128, 128),
                  AdaptiveMeanPool((1,1)),
                  flatten,
-                 Dropout(0.4),
+                 Dropout(0.2),
                  Dense(1024, 1000), softmax)
   Flux.testmode!(layers, false)
   return layers
