@@ -7,4 +7,5 @@ using Test
     include("VisionModel/resnet.jl")
     include("VisionModel/vgg.jl")
     include("VisionModel/googlenet.jl")
+    include("VisionModel/inception.jl")
 end

@@ -171,6 +171,6 @@ function inception3()
                 Dropout(0.2),
                 flatten,
                 Dense(2048, 1000))
-    Flux.testmode!(layers, false)
+    Flux.testmode!(layer, false)
     return layer
 end
