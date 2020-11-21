@@ -1,4 +1,4 @@
-function conv_block(kernelsize, inplanes, outplanes; stride=1, pad=0)
+function conv_block(kernelsize::Tuple{Int64,Int64}, inplanes::Int64, outplanes::Int64; stride::Int64=1, pad::Union{Int64,Tuple{Int64,Int64}}=0)
     conv_layer = []
     push!(conv_layer, Conv(kernelsize, inplanes => outplanes, stride=stride, pad=pad))
     push!(conv_layer, BatchNorm(outplanes, relu))
