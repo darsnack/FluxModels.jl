@@ -1,5 +1,3 @@
-using Flux
-
 function conv_block(kernelsize, inplanes, outplanes; stride=1, pad=0)
     conv_layer = []
     push!(conv_layer, Conv(kernelsize, inplanes => outplanes, stride=stride, pad=pad))
@@ -150,7 +148,7 @@ function inception_e(inplanes)
     end
 end
 
-function inception_v3()
+function inception3()
     layer = Chain(conv_block((3, 3), 3, 32; stride=2)...,
                 conv_block((3, 3), 32, 32)...,
                 conv_block((3, 3), 32, 64; pad=1)...,
@@ -173,6 +171,6 @@ function inception_v3()
                 Dropout(0.2),
                 flatten,
                 Dense(2048, 1000))
-    
+    Flux.testmode!(layers, false)
     return layer
 end
